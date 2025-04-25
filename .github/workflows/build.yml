@@ -84,6 +84,8 @@ jobs:
     needs: [metadata, build]
     if: needs.metadata.outputs.release == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Download artifacts
@@ -95,6 +97,13 @@ jobs:
         run: |
           git tag v${{ needs.metadata.outputs.version }}
           git push origin v${{ needs.metadata.outputs.version }}
+      - name: Compute hashes
+        id: hash
+        run: |
+          set -euo pipefail
+
+          files=$(ls pixi-pack*)
+          echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       - name: Create Release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
@@ -102,3 +111,14 @@ jobs:
           tag_name: v${{ needs.metadata.outputs.version }}
           draft: true
           files: pixi-pack-*
+
+  provenance:
+    needs: [release]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.release.outputs.hashes }}"
+      upload-assets: true
