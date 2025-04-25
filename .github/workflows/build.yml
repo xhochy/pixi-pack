@@ -79,10 +79,9 @@ jobs:
           path: pixi-pack-${{ matrix.target }}${{ endsWith(matrix.target, 'windows-msvc') && '.exe' || '' }}
           if-no-files-found: error
 
-  release:
-    name: Create Release
+  hashes:
+    name: Compute hashes
     needs: [metadata, build]
-    if: needs.metadata.outputs.release == 'true'
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -93,35 +92,51 @@ jobs:
         with:
           pattern: pixi-pack-*
           merge-multiple: true
-      - name: Push v${{ needs.metadata.outputs.version }} tag
-        run: |
-          git tag v${{ needs.metadata.outputs.version }}
-          git push origin v${{ needs.metadata.outputs.version }}
       - name: Compute hashes
         id: hash
         run: |
           set -exuo pipefail
-
-          ls -l
-
           files=$(ls pixi-pack*)
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
-      - name: Create Release
-        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
-        with:
-          generate_release_notes: true
-          tag_name: v${{ needs.metadata.outputs.version }}
-          draft: true
-          files: pixi-pack-*
 
   provenance:
-    needs: [metadata, release]
+    needs: [metadata, hashes]
     permissions:
       actions: read
       id-token: write
       contents: write
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
-      base64-subjects: "${{ needs.release.outputs.hashes }}"
-      upload-assets: true
-      upload-tag-name: v${{ needs.metadata.outputs.version }}
+      base64-subjects: "${{ needs.hashes.outputs.hashes }}"
+      upload-assets: false
+
+  release:
+    name: Create Release
+    needs: [metadata, build, provenance]
+    if: needs.metadata.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Download artifacts
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        with:
+          pattern: pixi-pack-*
+          merge-multiple: true
+      - name: Download provenance
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+        with:
+          name: ${{ needs.provenance.outputs.provenance-name }}
+          path: ${{ needs.provenance.outputs.provenance-name }}
+      - name: Push v${{ needs.metadata.outputs.version }} tag
+        run: |
+          git tag v${{ needs.metadata.outputs.version }}
+          git push origin v${{ needs.metadata.outputs.version }}
+      - name: Create Release
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
+        with:
+          generate_release_notes: true
+          tag_name: v${{ needs.metadata.outputs.version }}
+          draft: true
+          files: |
+            ${{ needs.provenance.output.provenance-name }}
+            pixi-pack-*
