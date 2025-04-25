@@ -115,7 +115,7 @@ jobs:
           files: pixi-pack-*
 
   provenance:
-    needs: [release]
+    needs: [metadata, release]
     permissions:
       actions: read
       id-token: write
@@ -124,3 +124,4 @@ jobs:
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true
+      upload-tag-name: v${{ needs.metadata.outputs.version }}
