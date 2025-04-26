@@ -138,5 +138,5 @@ jobs:
           tag_name: v${{ needs.metadata.outputs.version }}
           draft: true
           files: |
-            ${{ needs.provenance.output.provenance-name }}
+            ${{ needs.provenance.outputs.provenance-name }}
             pixi-pack-*
