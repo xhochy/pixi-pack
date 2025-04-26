@@ -131,6 +131,8 @@ jobs:
         run: |
           git tag v${{ needs.metadata.outputs.version }}
           git push origin v${{ needs.metadata.outputs.version }}
+      - name: List files
+        run: ls -l
       - name: Create Release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
