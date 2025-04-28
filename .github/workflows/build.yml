@@ -126,7 +126,7 @@ jobs:
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
           name: ${{ needs.provenance.outputs.provenance-name }}
-          path: ${{ needs.provenance.outputs.provenance-name }}
+          merge-multiple: true
       - name: Push v${{ needs.metadata.outputs.version }} tag
         run: |
           git tag v${{ needs.metadata.outputs.version }}
