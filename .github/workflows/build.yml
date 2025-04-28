@@ -141,5 +141,4 @@ jobs:
           draft: true
           files: |
             ${{ needs.provenance.outputs.provenance-name }}
-            *.jsonl
             pixi-pack-*
