@@ -116,6 +116,7 @@ fn default_output_file(platform: Platform, create_executable: bool) -> PathBuf {
 /// The main entrypoint for the pixi-pack CLI.
 #[tokio::main]
 async fn main() -> Result<()> {
+    println!("this is a bad pixi-pack");
     let cli = Cli::parse();
 
     tracing_subscriber::FmtSubscriber::builder()
