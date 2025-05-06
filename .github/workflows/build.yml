@@ -79,7 +79,6 @@ jobs:
   hashes:
     name: Compute hashes
     needs: [metadata, build]
-    if: needs.metadata.outputs.release == 'true'
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
