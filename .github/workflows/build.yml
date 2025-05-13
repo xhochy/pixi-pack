@@ -30,6 +30,7 @@ jobs:
       actions: read
       id-token: write
       contents: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
